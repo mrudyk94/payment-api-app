@@ -1,0 +1,58 @@
+services:
+
+  pay:
+    container_name: php.pay
+    build:
+      context: .
+      dockerfile: docker/config/php-fpm/Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./app:/var/www/html
+    networks:
+      pay:
+        aliases:
+          - php.pay
+
+  nginx:
+    container_name: nginx.pay
+    build:
+      context: .
+      dockerfile: docker/config/nginx/Dockerfile
+    volumes:
+      - ./app:/var/www/html
+    ports:
+      - ${APP_OUTER_PORT}:80
+    networks:
+      pay:
+        aliases:
+          - nginx.pay
+  db:
+    image: ${DB_IMAGE}
+    container_name: db.pay
+    environment:
+      TZ: ${TZ}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    ports:
+      - ${DB_OUTER_PORT}:${DB_PORT}
+    volumes:
+        - db:/var/lib/mysql
+    networks:
+        pay:
+          aliases:
+            - db.pay
+
+volumes:
+  db:
+    driver: local
+    driver_opts:
+      type: none
+      device: ${PWD}/volumes/db/data
+      o: bind
+
+networks:
+  pay:
+    name: pay
