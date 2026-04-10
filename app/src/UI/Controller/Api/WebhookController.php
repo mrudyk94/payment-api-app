@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\UI\Controller\Api;
 
 use App\Application\Service\PaymentService;
-use App\UI\Controller\DTO\WebhookPaymentInput;
+use App\UI\DTO\WebhookPaymentInput;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/webhook')]
@@ -28,7 +29,7 @@ final readonly class WebhookController
         methods: ['POST']
     )]
     public function payment(
-        WebhookPaymentInput $input
+        #[MapRequestPayload] WebhookPaymentInput $input
     ): JsonResponse
     {
         $payment = $this->paymentService->handleWebhook($input->id, $input->status);

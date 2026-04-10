@@ -19,3 +19,7 @@ api:
         namespace: App\UI\Controller\Api
     type: attribute
     prefix: /v1/api
+
+home:
+    path: /
+    controller: App\UI\Controller\HomeController

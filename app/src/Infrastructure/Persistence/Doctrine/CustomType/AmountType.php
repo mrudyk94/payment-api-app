@@ -20,12 +20,16 @@ final class AmountType extends Type
      * @return mixed
      */
     public function convertToDatabaseValue($value, AbstractPlatform $platform): mixed {
-        if (! $value instanceof Amount) {
+        if ($value === null) {
+            return null;
+        }
+
+        if (!$value instanceof Amount) {
             return $value;
         }
 
         return parent::convertToDatabaseValue(
-            $value->asString(),
+            $value->getValue(),
             $platform
         );
     }
@@ -62,8 +66,13 @@ final class AmountType extends Type
         return self::TYPE_NAME;
     }
 
+    /**
+     * @param array $column
+     * @param AbstractPlatform $platform
+     * @return string
+     */
     public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
-        // TODO: Implement getSQLDeclaration() method.
+        return 'INTEGER';
     }
 }

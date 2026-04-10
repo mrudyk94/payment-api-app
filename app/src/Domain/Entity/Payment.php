@@ -9,7 +9,7 @@ use App\Domain\Entity\Traits\Timestampable;
 use App\Domain\Enum\PaymentStatus;
 use App\Domain\ValueObject\Amount;
 use App\Domain\ValueObject\Currency;
-use App\Infrastructure\Repository\PaymentRepository;
+use App\Infrastructure\Repository\Doctrine\PaymentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -20,27 +20,33 @@ class Payment implements EntityInterface
     use EntityId;
     use Timestampable;
 
-    #[ORM\Column(name: 'amount', type: 'vo_amount', enumType: null)]
+    #[ORM\Column(name: 'amount', type: 'vo_amount')]
     private Amount $amount;
 
-    #[ORM\Column(name: 'currency', type: 'vo_currency', length: 3, enumType: null)]
+    #[ORM\Column(name: 'currency', type: 'vo_currency', length: 3)]
     private Currency $currency;
 
     #[ORM\Column(name: 'status', type: Types::STRING, length: 20, enumType: PaymentStatus::class)]
     private PaymentStatus $status;
 
+    #[ORM\Column(name: 'idempotencyKey', type: 'string', unique: true)]
+    private string $idempotencyKey;
+
     /**
      * @param Amount $amount
      * @param Currency $currency
+     * @param $idempotencyKey
      */
     public function __construct(
         Amount $amount,
-        Currency $currency
+        Currency $currency,
+        $idempotencyKey
     )
     {
         $this->amount = $amount;
         $this->currency = $currency;
         $this->status = PaymentStatus::CREATED;
+        $this->idempotencyKey = $idempotencyKey;
     }
 
     /**
@@ -52,29 +58,11 @@ class Payment implements EntityInterface
     }
 
     /**
-     * @param Amount $amount
-     * @return void
-     */
-    public function setAmount(Amount $amount): void
-    {
-        $this->amount = $amount;
-    }
-
-    /**
      * @return Currency
      */
     public function getCurrency(): Currency
     {
         return $this->currency;
-    }
-
-    /**
-     * @param Currency $currency
-     * @return void
-     */
-    public function setCurrency(Currency $currency): void
-    {
-        $this->currency = $currency;
     }
 
     /**
@@ -86,12 +74,11 @@ class Payment implements EntityInterface
     }
 
     /**
-     * @param PaymentStatus $status
-     * @return void
+     * @return string
      */
-    public function setStatus(PaymentStatus $status): void
+    public function getIdempotencyKey(): string
     {
-        $this->status = $status;
+        return $this->idempotencyKey;
     }
 
     /**
@@ -99,8 +86,8 @@ class Payment implements EntityInterface
      */
     public function pending(): void
     {
-        if ($this->status != PaymentStatus::CREATED) {
-            throw new \LogicException('Платіж можна обробити лише  статусі CREATED!');
+        if ($this->status !== PaymentStatus::CREATED) {
+            throw new \DomainException('Платіж можна обробити лише  статусі CREATED!');
         }
 
         $this->status = PaymentStatus::PENDING;
@@ -111,6 +98,7 @@ class Payment implements EntityInterface
      */
     public function completed(): void
     {
+        // Повторні webhook не ламають систему
         if (in_array($this->status, [PaymentStatus::COMPLETED, PaymentStatus::FAILED])) {
             return;
         }
@@ -123,6 +111,7 @@ class Payment implements EntityInterface
      */
     public function failed(): void
     {
+        // Повторні webhook не ламають систему
         if (in_array($this->status, [PaymentStatus::COMPLETED, PaymentStatus::FAILED])) {
             return;
         }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\UI\Controller\Api;
 
 use App\Application\Service\PaymentService;
-use App\UI\Controller\DTO\CreatePaymentInput;
+use App\UI\DTO\CreatePaymentInput;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -38,7 +38,8 @@ final readonly class PaymentController
     {
         $payment = $this->paymentService->createPayment(
             $input->amount,
-            $input->currency
+            $input->currency,
+            $input->key,
         );
 
         return new JsonResponse([
@@ -62,11 +63,11 @@ final readonly class PaymentController
         int $id
     ): JsonResponse
     {
-        $payment = $this->paymentService->processPayment($id);
+        $this->paymentService->processPayment($id);
 
         return new JsonResponse([
-            'id' => $payment->getId(),
-            'status' => $payment->getStatus(),
-        ]);
+            'status' => 'В обробці',
+            'message' => 'Платіж обробляється'
+        ],Response::HTTP_OK);
     }
 }

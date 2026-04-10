@@ -17,4 +17,12 @@ enum PaymentStatus: string
 
     // Помилка
     case FAILED = 'failed';
+
+    public function isFinal(): bool
+    {
+        return in_array($this, [
+            self::COMPLETED,
+            self::FAILED,
+        ], true);
+    }
 }

@@ -4,19 +4,26 @@ declare(strict_types=1);
 
 namespace App\Application\Service;
 
+use App\Application\Exception\Payment\InvalidPaymentStateException;
+use App\Application\Exception\Payment\PaymentNotFoundException;
+use App\Application\Message\ProcessPaymentMessage;
 use App\Application\Port\Service\PaymentServiceInterface;
 use App\Domain\Entity\Payment;
+use App\Domain\Enum\PaymentStatus;
 use App\Domain\ValueObject\Amount;
 use App\Domain\ValueObject\Currency;
-use App\Infrastructure\Repository\PaymentRepository;
+use App\Infrastructure\Repository\Doctrine\PaymentRepository;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 class PaymentService implements PaymentServiceInterface
 {
     /**
      * @param PaymentRepository $paymentRepository
+     * @param MessageBusInterface $messageBus
      */
     public function __construct(
         private readonly PaymentRepository $paymentRepository,
+        private readonly MessageBusInterface $messageBus
     )
     {
     }
@@ -24,12 +31,21 @@ class PaymentService implements PaymentServiceInterface
     /**
      * {@inheritDoc}
      */
-    public function createPayment(float $amount, string $currency): Payment
+    public function createPayment(float $amount, string $currency, string $key): Payment
     {
-        // TODO Переглянути створення платежу
+         // Перевіряємо чи вже існує платіж
+        $existing = $this->paymentRepository->findByIdempotencyKey($key);
+
+        // Якщо платіж був раніше створений, просто повертаємо по ньому інформацію
+        if ($existing) {
+            return $existing;
+        }
+
+        // Створюємо новий платіж
         $payment = new Payment(
             Amount::fromFloat($amount),
-            new Currency($currency)
+            new Currency($currency),
+            $key
         );
 
         $this->paymentRepository->saveAndFlush($payment);
@@ -40,20 +56,20 @@ class PaymentService implements PaymentServiceInterface
     /**
      * {@inheritDoc}
      */
-    public function processPayment(int $paymentId): ?Payment
+    public function processPayment(int $paymentId): void
     {
         $payment = $this->paymentRepository->findById($paymentId);
+
         if (!$payment) {
-            throw new \InvalidArgumentException('Даний платіж не знайдено!');
+            throw new PaymentNotFoundException($paymentId);
         }
 
-        $payment->pending();
-        $this->paymentRepository->saveAndFlush($payment);
+        if ($payment->getStatus() !== PaymentStatus::CREATED) {
+            throw new InvalidPaymentStateException();
+        }
 
-        // Імітація зовнішнього провайдера
-        // Тут можна додати RabbitMQ/Queue для асинхронності
-
-        return $payment;
+        // Імітація зовнішнього провайдера, відправка в чергу
+        $this->messageBus->dispatch(new ProcessPaymentMessage($payment->getId()));
     }
 
     /**
@@ -63,7 +79,12 @@ class PaymentService implements PaymentServiceInterface
     {
         $payment = $this->paymentRepository->findById($paymentId);
         if (!$payment) {
-            throw new \InvalidArgumentException('Даний платіж не знайдено!');
+            throw new PaymentNotFoundException($paymentId);
+        }
+
+        // Повторний webhook нічого не робить
+        if ($payment->getStatus()->isFinal()) {
+            return $payment;
         }
 
         if ($status === 'success') {

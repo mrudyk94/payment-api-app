@@ -14,4 +14,11 @@ interface PaymentRepositoryInterface extends EntityRepositoryInterface
      * @return Payment|null
      */
     public function findById(int $id): ?Payment;
+
+    /**
+     * Отримати платіж по IdempotencyKey
+     * @param string $key
+     * @return Payment|null
+     */
+    public function findByIdempotencyKey(string $key): ?Payment;
 }

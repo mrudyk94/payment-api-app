@@ -10,17 +10,20 @@ interface PaymentServiceInterface
      * Створення платежу
      * @param float $amount
      * @param string $currency
+     * @param string $key
      * @return Payment
      */
-    public function createPayment(float $amount, string $currency): Payment;
+    public function createPayment(float $amount, string $currency, string $key): Payment;
 
     /**
+     * Імітація зовнішнього провайдера, відправка в чергу
      * @param int $paymentId
-     * @return Payment|null
+     * @return void
      */
-    public function processPayment(int $paymentId): ?Payment;
+    public function processPayment(int $paymentId): void;
 
     /**
+     * Обробка вхідного webhook-запиту від стороннього сервісу.
      * @param int $paymentId
      * @param string $status
      * @return Payment|null
