@@ -45,7 +45,7 @@ run up
 
 ### 4️⃣ Встановлення залежностей (Composer) без входу в контейнер
 ```bash
-docker compose exec api composer install
+docker compose exec pay composer install
 ```
 
 ### 5️⃣ Міграції бази даних без входу в контейнер
