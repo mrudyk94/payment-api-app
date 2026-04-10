@@ -55,7 +55,7 @@ docker compose exec pay composer install
 docker compose down -v && docker compose up -d
 ```
 ```bash
-docker compose exec api php bin/console doctrine:migrations:migrate
+docker compose exec pay php bin/console doctrine:migrations:migrate
 ```
 
 ## 🐰 RabbitMQ
