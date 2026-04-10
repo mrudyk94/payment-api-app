@@ -58,6 +58,22 @@ docker compose down -v && docker compose up -d
 docker compose exec api php bin/console doctrine:migrations:migrate
 ```
 
+## 🐰 RabbitMQ
+
+Проєкт використовує RabbitMQ як транспорт для Symfony Messenger.
+
+### 🔗 Management UI
+http://localhost:15672
+
+**Credentials:**
+- login: `guest`
+- password: `guest`
+
+### 📌 Використання
+- черга для обробки платежів
+- асинхронна обробка через worker-и
+- можливість моніторингу повідомлень у реальному часі
+
 ### 🧪 Приклади API-запитів (curl)
 
 🔹 Створення платежу
