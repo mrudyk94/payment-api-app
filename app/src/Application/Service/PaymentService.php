@@ -56,7 +56,7 @@ class PaymentService implements PaymentServiceInterface
     /**
      * {@inheritDoc}
      */
-    public function processPayment(int $paymentId): void
+    public function processPayment(int $paymentId): Payment
     {
         $payment = $this->paymentRepository->findById($paymentId);
 
@@ -70,6 +70,8 @@ class PaymentService implements PaymentServiceInterface
 
         // Імітація зовнішнього провайдера, відправка в чергу
         $this->messageBus->dispatch(new ProcessPaymentMessage($payment->getId()));
+
+        return $payment;
     }
 
     /**

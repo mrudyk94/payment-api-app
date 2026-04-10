@@ -18,9 +18,9 @@ interface PaymentServiceInterface
     /**
      * Імітація зовнішнього провайдера, відправка в чергу
      * @param int $paymentId
-     * @return void
+     * @return Payment
      */
-    public function processPayment(int $paymentId): void;
+    public function processPayment(int $paymentId): Payment;
 
     /**
      * Обробка вхідного webhook-запиту від стороннього сервісу.
