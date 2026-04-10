@@ -1,7 +1,8 @@
-# 🚀 Payment API App
+# 🚀 Payment Processing System
 
-Backend API сервіс для роботи з користувачами.  
-Проєкт запускається в Docker та використовує Symfony + MariaDB.
+Backend API сервіс для обробки платежів із підтримкою асинхронних процесів та симуляцією взаємодії із зовнішнім платіжним провайдером.
+
+Архітектура побудована на Docker та реалізована з використанням Symfony, Domain-Driven Design (DDD), Symfony Messenger з RabbitMQ для черг задач та MariaDB як основної бази даних.
 
 ---
 
@@ -40,4 +41,19 @@ run build
 
 # Підняття контейнерів у фоновому режимі
 run up
+```
+
+### 4️⃣ Встановлення залежностей (Composer) без входу в контейнер
+```bash
+docker compose exec api composer install
+```
+
+### 5️⃣ Міграції бази даних без входу в контейнер
+> ⚠️ Перед виконанням міграцій **потрібно перезапустити контейнери**:
+```bash
+# Перезапуск контейнерів
+docker compose down -v && docker compose up -d
+```
+```bash
+docker compose exec api php bin/console doctrine:migrations:migrate
 ```
